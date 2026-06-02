@@ -337,7 +337,7 @@ class SslUnpinModule(base: XposedInterface, param: ModuleLoadedParam) : XposedMo
         companion object {
             @JvmStatic
             @BeforeInvocation
-            fun beforeInvocation(callback: XposedInterface.BeforeHookCallback) {
+            fun before(callback: XposedInterface.BeforeHookCallback) {
                 module.handleGenericHookBefore(callback)
             }
         }
@@ -349,7 +349,7 @@ class SslUnpinModule(base: XposedInterface, param: ModuleLoadedParam) : XposedMo
             @JvmStatic
             @BeforeInvocation
             @Suppress("UNUSED_PARAMETER")
-            fun beforeInvocation(callback: XposedInterface.BeforeHookCallback) {
+            fun before(callback: XposedInterface.BeforeHookCallback) {
                 module.handleSslPeerUnverified()
             }
         }
@@ -674,7 +674,7 @@ class SslUnpinModule(base: XposedInterface, param: ModuleLoadedParam) : XposedMo
         companion object {
             @JvmStatic
             @BeforeInvocation
-            fun beforeInvocation(callback: XposedInterface.BeforeHookCallback) {
+            fun before(callback: XposedInterface.BeforeHookCallback) {
                 module.handleLoadLibrary(callback)
             }
         }
