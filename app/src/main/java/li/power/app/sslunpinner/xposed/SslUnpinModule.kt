@@ -583,7 +583,11 @@ class SslUnpinModule(base: XposedInterface, param: ModuleLoadedParam) : XposedMo
         }
 
         logMessage("Flutter: patching ${srcFile!!.absolutePath} -> ${dstFile.absolutePath}")
-        val success = false
+        val success = if (dstFile.exists()) {
+            true
+        } else {
+            FlutterSslPatcher.patchLibrary(srcFile!!, dstFile, arch)
+        }
         logMessage(
     "Flutter: patch result=$success"
 )
@@ -593,6 +597,8 @@ class SslUnpinModule(base: XposedInterface, param: ModuleLoadedParam) : XposedMo
         }
 
         logMessage("Flutter: patch succeeded, loading patched library...")
+        logMessage("TEST: skipping patched load")
+        return
         flutterPatchInProgress = true
         // Load the patched library instead of the original
         try {
