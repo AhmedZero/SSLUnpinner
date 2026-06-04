@@ -38,6 +38,26 @@ class SslUnpinModule(base: XposedInterface, param: ModuleLoadedParam) : XposedMo
         }
 
         appClassLoader = param.classLoader
+            // ===== DEBUG =====
+            for (m in GenericBypassHooker::class.java.declaredMethods) {
+                logMessage(
+                    "GENERIC: ${m.name} static=${Modifier.isStatic(m.modifiers)}"
+                )
+            }
+        
+            for (m in SslPeerUnverifiedHooker::class.java.declaredMethods) {
+                logMessage(
+                    "SSLPEER: ${m.name} static=${Modifier.isStatic(m.modifiers)}"
+                )
+            }
+        
+            for (m in LoadLibraryHooker::class.java.declaredMethods) {
+                logMessage(
+                    "LOADLIB: ${m.name} static=${Modifier.isStatic(m.modifiers)}"
+                )
+            }
+            // ===== DEBUG =====
+
         var installed = 0
         for (spec in HOOK_SPECS) {
             installed += installHookSpec(param.classLoader, spec)
