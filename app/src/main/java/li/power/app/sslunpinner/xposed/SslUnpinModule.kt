@@ -16,7 +16,6 @@ import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 import android.util.Log
-import io.github.libxposed.api.annotations.BeforeInvocation
 import io.github.libxposed.api.annotations.XposedHooker
 import java.io.File
 
@@ -336,7 +335,6 @@ class SslUnpinModule(base: XposedInterface, param: ModuleLoadedParam) : XposedMo
     class GenericBypassHooker : XposedInterface.Hooker {
         companion object {
             @JvmStatic
-            @BeforeInvocation
             fun before(callback: XposedInterface.BeforeHookCallback) {
                 module.handleGenericHookBefore(callback)
             }
@@ -347,8 +345,6 @@ class SslUnpinModule(base: XposedInterface, param: ModuleLoadedParam) : XposedMo
     class SslPeerUnverifiedHooker : XposedInterface.Hooker {
         companion object {
             @JvmStatic
-            @BeforeInvocation
-            @Suppress("UNUSED_PARAMETER")
             fun before(callback: XposedInterface.BeforeHookCallback) {
                 module.handleSslPeerUnverified()
             }
@@ -673,7 +669,6 @@ class SslUnpinModule(base: XposedInterface, param: ModuleLoadedParam) : XposedMo
     class LoadLibraryHooker : XposedInterface.Hooker {
         companion object {
             @JvmStatic
-            @BeforeInvocation
             fun before(callback: XposedInterface.BeforeHookCallback) {
                 module.handleLoadLibrary(callback)
             }
