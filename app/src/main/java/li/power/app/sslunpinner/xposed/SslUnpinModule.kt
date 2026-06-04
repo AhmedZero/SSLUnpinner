@@ -440,6 +440,10 @@ class SslUnpinModule(base: XposedInterface, param: ModuleLoadedParam) : XposedMo
     }
 
     private fun handleLoadLibrary(callback: XposedInterface.BeforeHookCallback) {
+        if (flutterPatchInProgress) {
+            logMessage("Flutter: patch already in progress, skipping")
+            return
+        }
         // Log every call to loadLibrary
         val allArgs = callback.args.mapIndexed { i, a -> "arg$i=${a?.javaClass?.simpleName}:$a" }.joinToString(", ")
         logMessage("Flutter: handleLoadLibrary called, args=[$allArgs]")
@@ -574,8 +578,16 @@ class SslUnpinModule(base: XposedInterface, param: ModuleLoadedParam) : XposedMo
         }
         val dstFile = File(cacheDir, "libflutter_patched.so")
 
+        if (dstFile.exists()) {
+            logMessage("Flutter: using cached patched library")
+        }
+
         logMessage("Flutter: patching ${srcFile!!.absolutePath} -> ${dstFile.absolutePath}")
-        val success = FlutterSslPatcher.patchLibrary(srcFile!!, dstFile, arch)
+        val success = if (dstFile.exists()) {
+            true
+        } else {
+            FlutterSslPatcher.patchLibrary(srcFile!!, dstFile, arch)
+        }
         logMessage(
     "Flutter: patch result=$success"
 )
@@ -585,6 +597,7 @@ class SslUnpinModule(base: XposedInterface, param: ModuleLoadedParam) : XposedMo
         }
 
         logMessage("Flutter: patch succeeded, loading patched library...")
+        flutterPatchInProgress = true
         // Load the patched library instead of the original
         try {
             val runtime = Runtime.getRuntime()
@@ -682,11 +695,14 @@ class SslUnpinModule(base: XposedInterface, param: ModuleLoadedParam) : XposedMo
             logMessage("Flutter: loaded patched libflutter.so successfully!")
             // Skip the original loadLibrary call
             
-            // callback.returnAndSkip(null)
+            callback.returnAndSkip(null)
         } catch (e: Exception) {
             logMessage("Flutter: failed to load patched library: ${e.javaClass.name}: ${e.message}")
             logMessage("Flutter: stack: ${e.stackTraceToString().take(500)}")
             // Let the original load proceed
+        }
+        finally {
+            flutterPatchInProgress = false
         }
     }
 
@@ -751,6 +767,7 @@ class SslUnpinModule(base: XposedInterface, param: ModuleLoadedParam) : XposedMo
         @Volatile private var appClassLoader: ClassLoader? = null
         @Volatile private var flutterPatched = false
         @Volatile private var currentPackageName: String? = null
+        @Volatile private var flutterPatchInProgress = false
 
         private val HOOK_SPECS = listOf(
             HookSpec(
