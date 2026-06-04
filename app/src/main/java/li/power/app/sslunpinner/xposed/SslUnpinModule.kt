@@ -681,7 +681,8 @@ class SslUnpinModule(base: XposedInterface, param: ModuleLoadedParam) : XposedMo
             flutterPatched = true
             logMessage("Flutter: loaded patched libflutter.so successfully!")
             // Skip the original loadLibrary call
-            callback.returnAndSkip(null)
+            
+            // callback.returnAndSkip(null)
         } catch (e: Exception) {
             logMessage("Flutter: failed to load patched library: ${e.javaClass.name}: ${e.message}")
             logMessage("Flutter: stack: ${e.stackTraceToString().take(500)}")
