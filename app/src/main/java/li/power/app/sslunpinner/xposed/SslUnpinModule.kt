@@ -18,6 +18,8 @@ import javax.net.ssl.X509TrustManager
 import android.util.Log
 import io.github.libxposed.api.annotations.XposedHooker
 import java.io.File
+import java.util.zip.ZipFile
+import java.io.FileOutputStream
 
 class SslUnpinModule(base: XposedInterface, param: ModuleLoadedParam) : XposedModule(base, param) {
 
@@ -477,9 +479,50 @@ class SslUnpinModule(base: XposedInterface, param: ModuleLoadedParam) : XposedMo
                 val libPath = findLibraryMethod.invoke(cl, "flutter") as? String
                 logMessage("Flutter: ClassLoader.findLibrary returned: $libPath")
                 if (libPath != null) {
-                    val f = File(libPath)
-                    if (f.exists()) srcFile = f
-                }
+
+                        if (libPath.contains("!/")) {
+                    
+                            val apkPath = libPath.substringBefore("!")
+                            val entryPath = libPath.substringAfter("!/")
+                    
+                            logMessage("Flutter: APK=$apkPath")
+                            logMessage("Flutter: ENTRY=$entryPath")
+                    
+                            try {
+                                val extracted = File("/data/data/$pkg/cache/libflutter_original.so")
+                    
+                                ZipFile(apkPath).use { zip ->
+                                    val entry = zip.getEntry(entryPath)
+                    
+                                    if (entry != null) {
+                                        zip.getInputStream(entry).use { input ->
+                                            FileOutputStream(extracted).use { output ->
+                                                input.copyTo(output)
+                                            }
+                                        }
+                    
+                                        logMessage(
+                                            "Flutter: extracted libflutter.so (${extracted.length()} bytes)"
+                                        )
+                    
+                                        srcFile = extracted
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                logMessage(
+                                    "Flutter: APK extraction failed: ${e.message}"
+                                )
+                            }
+                    
+                        } else {
+                    
+                            val f = File(libPath)
+                    
+                            if (f.exists()) {
+                                srcFile = f
+                            }
+                        }
+                    }
             } else {
                 logMessage("Flutter: appClassLoader is null")
             }
@@ -533,6 +576,9 @@ class SslUnpinModule(base: XposedInterface, param: ModuleLoadedParam) : XposedMo
 
         logMessage("Flutter: patching ${srcFile!!.absolutePath} -> ${dstFile.absolutePath}")
         val success = FlutterSslPatcher.patchLibrary(srcFile!!, dstFile, arch)
+        logMessage(
+    "Flutter: patch result=$success"
+)
         if (!success) {
             logMessage("Flutter: patching failed — no pattern matched")
             return
